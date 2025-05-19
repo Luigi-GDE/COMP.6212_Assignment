@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 
 export default function AdminPage() {
   const [user, setUser] = useState(null);
@@ -28,6 +29,7 @@ export default function AdminPage() {
       setCustomers(customersData || []);
       setItems(itemsData || []);
     } catch (err) {
+      console.error("Failed to fetch data:", err); // Log the error for debugging
       setError("Failed to fetch data.");
     }
     setLoading(false);
@@ -42,7 +44,6 @@ export default function AdminPage() {
         fetchAll();
       }
     });
-    // eslint-disable-next-line
   }, [navigate]);
 
   // --- Rentals CRUD ---
@@ -78,11 +79,6 @@ export default function AdminPage() {
   };
 
   // --- Items CRUD ---
-  const handleDeleteItem = async (id) => {
-    await supabase.from("Items").delete().eq("item_id", id);
-    fetchAll();
-  };
-
   const handleAddOrUpdateItem = async (item) => {
     if (item.item_id) {
       await supabase.from("Items").update(item).eq("item_id", item.item_id);
@@ -176,22 +172,23 @@ export default function AdminPage() {
 
         {/* Items Section */}
         <h2>Items</h2>
-        <button onClick={() => setEditingItem({})}>Add Item</button>
         <table style={{ width: "100%", margin: "1rem 0" }}>
           <thead>
             <tr>
-              <th>ID</th><th>Item</th><th>Price</th><th>Actions</th>
+              <th>ID</th>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {items.map(i => (
+            {items.map((i) => (
               <tr key={i.item_id}>
                 <td>{i.item_id}</td>
                 <td>{i.item}</td>
-                <td>{i.price}</td>
+                <td>${i.price}</td>
                 <td>
-                  <button onClick={() => setEditingItem(i)}>Edit</button>
-                  <button onClick={() => handleDeleteItem(i.item_id)}>Delete</button>
+                  <button onClick={() => setEditingItem(i)}>Edit Price</button>
                 </td>
               </tr>
             ))}
@@ -261,6 +258,15 @@ function RentalForm({ rental, customers, items, onSave, onCancel }) {
   );
 }
 
+// RentalForm PropTypes
+RentalForm.propTypes = {
+  rental: PropTypes.object.isRequired,
+  customers: PropTypes.array.isRequired,
+  items: PropTypes.array.isRequired,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
 // --- Customer Form ---
 function CustomerForm({ customer, onSave, onCancel }) {
   const [form, setForm] = useState(customer);
@@ -299,32 +305,49 @@ function CustomerForm({ customer, onSave, onCancel }) {
   );
 }
 
+// CustomerForm PropTypes
+CustomerForm.propTypes = {
+  customer: PropTypes.object.isRequired,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
 // --- Item Form ---
 function ItemForm({ item, onSave, onCancel }) {
-  const [form, setForm] = useState(item);
+  const [form, setForm] = useState({ price: item.price });
 
   useEffect(() => {
-    setForm(item);
+    setForm({ price: item.price });
   }, [item]);
 
   return (
     <form
       style={{ margin: "1rem 0", background: "#f0f8ff", padding: 16, borderRadius: 8 }}
-      onSubmit={e => {
+      onSubmit={(e) => {
         e.preventDefault();
-        onSave(form);
+        onSave({ ...item, price: form.price }); // Only update the price
       }}
     >
       <label>
-        Item:
-        <input type="text" value={form.item || ""} onChange={e => setForm(f => ({ ...f, item: e.target.value }))} required />
-      </label>
-      <label>
         Price:
-        <input type="number" value={form.price || ""} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} required />
+        <input
+          type="number"
+          value={form.price || ""}
+          onChange={(e) => setForm({ price: Number(e.target.value) })}
+          required
+        />
       </label>
       <button type="submit">Save</button>
-      <button type="button" onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
+      <button type="button" onClick={onCancel} style={{ marginLeft: 8 }}>
+        Cancel
+      </button>
     </form>
   );
 }
+
+// ItemForm PropTypes
+ItemForm.propTypes = {
+  item: PropTypes.object.isRequired,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};

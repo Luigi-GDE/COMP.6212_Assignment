@@ -73,54 +73,60 @@ export default function Rentals() {
 		setError("");
 		setSuccess("");
 
-		// 1. Insert or get customer
-		let { data: customer } = await supabase
-			.from("Customers")
-			.select("cust_id")
-			.eq("email", form.email)
-			.single();
-
-		let cust_id;
-		if (!customer) {
-			// Insert new customer
-			let { data: newCust, error: newCustErr } = await supabase
+		try {
+			// 1. Insert or get customer
+			let { data: customer, error: customerError } = await supabase
 				.from("Customers")
+				.select("cust_id")
+				.eq("email", form.email)
+				.single();
+
+			console.log("Customer query result:", customer, customerError);
+
+			let cust_id;
+			if (customer) {
+				// Customer already exists
+				cust_id = customer.cust_id;
+			} else {
+				// Insert new customer
+				const { data: newCust, error: newCustErr } = await supabase
+					.from("Customers")
+					.insert([
+						{
+							name: form.name,
+							surname: form.surname,
+							mobile: form.mobile,
+							email: form.email,
+						},
+					])
+					.select()
+					.single();
+
+				if (newCustErr) {
+					console.error("Customer insertion error:", newCustErr);
+					throw new Error("Error adding customer: " + newCustErr.message);
+				}
+				cust_id = newCust.cust_id;
+			}
+
+			// 2. Insert rental
+			const { error: rentalErr } = await supabase
+				.from("Rentals")
 				.insert([
 					{
-						name: form.name,
-						surname: form.surname,
-						mobile: form.mobile,
-						email: form.email,
+						date: form.date,
+						hours: form.hours,
+						cost,
+						cust_id,
+						item_id: form.item_id,
 					},
-				])
-				.select()
-				.single();
-			if (newCustErr) {
-				setError("Error adding customer: " + newCustErr.message);
-				setLoading(false);
-				return;
+				]);
+
+			if (rentalErr) {
+				console.error("Rental insertion error:", rentalErr);
+				throw new Error("Error placing rental: " + rentalErr.message);
 			}
-			cust_id = newCust.cust_id;
-		} else {
-			cust_id = customer.cust_id;
-		}
 
-		// 2. Insert rental
-		const { error: rentalErr } = await supabase
-			.from("Rentals")
-			.insert([
-				{
-					date: form.date,
-					hours: form.hours,
-					cost,
-					cust_id,
-					item_id: form.item_id,
-				},
-			]);
-
-		if (rentalErr) {
-			setError("Error placing rental: " + rentalErr.message);
-		} else {
 			setSuccess("Rental placed successfully!");
 			setForm({
 				...form,
@@ -130,8 +136,12 @@ export default function Rentals() {
 				mobile: "",
 				email: "",
 			});
+		} catch (err) {
+			console.error("Error in handleSubmit:", err);
+			setError(err.message);
+		} finally {
+			setLoading(false);
 		}
-		setLoading(false);
 	};
 
 	return (

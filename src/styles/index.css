@@ -128,14 +128,15 @@ body {
   font-weight: bold;
   text-decoration: none;
   font-size: 1.1rem;
-  box-shadow: 0 2px 8px rgba(30,60,114,0.1);
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  border: 2px solid transparent; /* Add a transparent border to prevent shifting */
 }
 
 .home-cta:hover {
   background: #222;
   color: #61dafb;
-  border: 1px solid #61dafb;
+  border: 2px solid #61dafb; /* Ensure the border size doesn't change */
 }
 
 .home-features {
