@@ -12,12 +12,12 @@ export default function Home() {
       </div>
       <div className="home-features">
         <Link to="/about" className="feature-card" style={{ textDecoration: "none" }}>
-          <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80" alt="Affordable Rates" />
-          <h2>Affordable Rates</h2>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStoFwUIYvB_2aN9inraTjxCA5bTKYlX-Fhqg&s" alt="Affordable Rates" />
+          <h2>What we sell</h2>
           <p>Enjoy competitive pricing and flexible rental periods for every budget.</p>
         </Link>
         <Link to="/contact" className="feature-card" style={{ textDecoration: "none" }}>
-          <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80" alt="Expert Advice" />
+          <img src="https://blog.udemy.com/wp-content/uploads/2014/06/shutterstock_196749377.jpg" alt="Expert Advice" />
           <h2>Expert Advice</h2>
           <p>Our team is here to help you pick the perfect gear and share local surf tips.</p>
         </Link>

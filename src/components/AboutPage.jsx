@@ -8,6 +8,11 @@ export default function AboutPage() {
     };
   }, []);
 
+  const handleDeleteItem = async (id) => {
+    await supabase.from("Items").delete().eq("item_id", id);
+    fetchAll();
+  };
+
   return (
     <section className="about-page">
       <h1>

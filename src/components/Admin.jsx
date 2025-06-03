@@ -10,12 +10,14 @@ export default function AdminPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
-
+  const [rentalIdFilter, setRentalIdFilter] = useState("");
+  const [rentalDateFilter, setRentalDateFilter] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   // For add/update forms
   const [editingRental, setEditingRental] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch all data
   const fetchAll = async () => {
@@ -89,6 +91,20 @@ export default function AdminPage() {
     fetchAll();
   };
 
+  // Rentals filter logic
+  const filteredRentals = rentals.filter(r => {
+    const idMatch = rentalIdFilter === "" || String(r.rental_id).includes(rentalIdFilter);
+    const dateMatch = rentalDateFilter === "" || r.date === rentalDateFilter;
+    return idMatch && dateMatch;
+  });
+
+  // Customers search logic
+  const filteredCustomers = customers.filter(c =>
+    [c.cust_id, c.name, c.surname, c.mobile, c.email]
+      .map(val => String(val).toLowerCase())
+      .some(val => val.includes(customerSearch.toLowerCase()))
+  );
+
   if (!user) return <div className="admin-loading">Loading...</div>;
   if (loading) return <div className="admin-loading">Loading data...</div>;
 
@@ -104,29 +120,70 @@ export default function AdminPage() {
         {/* Rentals Section */}
         <h2>Rentals</h2>
         <button onClick={() => setEditingRental({})}>Add Rental</button>
-        <table style={{ width: "100%", margin: "1rem 0" }}>
-          <thead>
-            <tr>
-              <th>ID</th><th>Date</th><th>Hours</th><th>Cost</th><th>Customer</th><th>Item</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rentals.map(r => (
-              <tr key={r.rental_id}>
-                <td>{r.rental_id}</td>
-                <td>{r.date}</td>
-                <td>{r.hours}</td>
-                <td>{r.cost}</td>
-                <td>{r.cust_id}</td>
-                <td>{r.item_id}</td>
-                <td>
-                  <button onClick={() => setEditingRental(r)}>Edit</button>
-                  <button onClick={() => handleDeleteRental(r.rental_id)}>Delete</button>
-                </td>
+        <div style={{ display: "flex", gap: "1rem", margin: "1rem 0 0.5rem 0", flexWrap: "wrap" }}>
+          <input
+            className="admin-search"
+            style={{ maxWidth: 160 }}
+            type="text"
+            placeholder="Filter by ID"
+            value={rentalIdFilter}
+            onChange={e => setRentalIdFilter(e.target.value)}
+          />
+          <input
+            className="admin-search"
+            style={{ maxWidth: 180 }}
+            type="date"
+            placeholder="Filter by Date"
+            value={rentalDateFilter}
+            onChange={e => setRentalDateFilter(e.target.value)}
+          />
+        </div>
+        <div className="admin-table-scroll">
+          <table style={{ width: "100%", tableLayout: "fixed" }}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Cost</th>
+                <th>Customer</th>
+                <th>Item</th>
+                <th style={{ width: '60px' }}>Edit</th>
+                <th style={{ width: '70px' }}>Delete</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredRentals.map(r => (
+                <tr key={r.rental_id}>
+                  <td>{r.rental_id}</td>
+                  <td>{r.date}</td>
+                  <td>{r.hours}</td>
+                  <td>{r.cost}</td>
+                  <td>{r.cust_id}</td>
+                  <td>{r.item_id}</td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      onClick={() => setEditingRental(r)}
+                      title="Edit"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      className="action-btn delete"
+                      onClick={() => handleDeleteRental(r.rental_id)}
+                      title="Delete"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {editingRental && (
           <RentalForm
             rental={editingRental}
@@ -140,28 +197,52 @@ export default function AdminPage() {
         {/* Customers Section */}
         <h2>Customers</h2>
         <button onClick={() => setEditingCustomer({})}>Add Customer</button>
-        <table style={{ width: "100%", margin: "1rem 0" }}>
-          <thead>
-            <tr>
-              <th>ID</th><th>Name</th><th>Surname</th><th>Mobile</th><th>Email</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map(c => (
-              <tr key={c.cust_id}>
-                <td>{c.cust_id}</td>
-                <td>{c.name}</td>
-                <td>{c.surname}</td>
-                <td>{c.mobile}</td>
-                <td>{c.email}</td>
-                <td>
-                  <button onClick={() => setEditingCustomer(c)}>Edit</button>
-                  <button onClick={() => handleDeleteCustomer(c.cust_id)}>Delete</button>
-                </td>
+        <input
+          className="admin-search"
+          type="text"
+          placeholder="Search customers..."
+          value={customerSearch}
+          onChange={e => setCustomerSearch(e.target.value)}
+        />
+        <div className="admin-table-scroll">
+          <table style={{ width: "100%", margin: "1rem 0", tableLayout: "fixed" }}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredCustomers.map(c => (
+                <tr key={c.cust_id}>
+                  <td>{c.cust_id}</td>
+                  <td>{c.name}</td>
+                  <td>{c.surname}</td>
+                  <td>{c.mobile}</td>
+                  <td>{c.email}</td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      onClick={() => setEditingCustomer(c)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="action-btn delete"
+                      onClick={() => handleDeleteCustomer(c.cust_id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {editingCustomer && (
           <CustomerForm
             customer={editingCustomer}
@@ -172,28 +253,41 @@ export default function AdminPage() {
 
         {/* Items Section */}
         <h2>Items</h2>
-        <table style={{ width: "100%", margin: "1rem 0" }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Item</th>
-              <th>Price</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((i) => (
-              <tr key={i.item_id}>
-                <td>{i.item_id}</td>
-                <td>{i.item}</td>
-                <td>${i.price}</td>
-                <td>
-                  <button onClick={() => setEditingItem(i)}>Edit Price</button>
-                </td>
+        <div className="admin-table-scroll">
+          <table style={{ width: "100%", margin: "1rem 0", tableLayout: "fixed" }}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((i) => (
+                <tr key={i.item_id}>
+                  <td>{i.item_id}</td>
+                  <td>{i.item}</td>
+                  <td>${i.price}</td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      onClick={() => setEditingItem(i)}
+                    >
+                      Edit Price
+                    </button>
+                    <button
+                      className="action-btn delete"
+                      onClick={() => handleDeleteItem(i.item_id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {editingItem && (
           <ItemForm
             item={editingItem}
